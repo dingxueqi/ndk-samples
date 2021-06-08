@@ -29,11 +29,12 @@
 
 
 // for __android_log_print(ANDROID_LOG_INFO, "YourApp", "formatted message");
-// #include <android/log.h>
+#include <android/log.h>
 
 // for native audio
 #include <SLES/OpenSLES.h>
 #include <SLES/OpenSLES_Android.h>
+#include <SLES/OpenSLES_AndroidConfiguration.h>
 
 // for native asset manager
 #include <sys/types.h>
@@ -319,13 +320,25 @@ Java_com_example_nativeaudio_NativeAudio_createBufferQueueAudioPlayer(JNIEnv* en
      *     fast audio does not support when SL_IID_EFFECTSEND is required, skip it
      *     for fast audio case
      */
-    const SLInterfaceID ids[3] = {SL_IID_BUFFERQUEUE, SL_IID_VOLUME, SL_IID_EFFECTSEND,
-                                    /*SL_IID_MUTESOLO,*/};
-    const SLboolean req[3] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE,
-                                   /*SL_BOOLEAN_TRUE,*/ };
+    const SLInterfaceID ids[4] = {SL_IID_BUFFERQUEUE, SL_IID_VOLUME, SL_IID_EFFECTSEND,
+                                    SL_IID_ANDROIDCONFIGURATION};
+    const SLboolean req[4] = {SL_BOOLEAN_TRUE,SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE,
+                                   SL_BOOLEAN_TRUE};
 
     result = (*engineEngine)->CreateAudioPlayer(engineEngine, &bqPlayerObject, &audioSrc, &audioSnk,
-            bqPlayerSampleRate? 2 : 3, ids, req);
+            4, ids, req);
+    assert(SL_RESULT_SUCCESS == result);
+    (void)result;
+
+    SLAndroidConfigurationItf playerConfig;
+    result = (*bqPlayerObject)->GetInterface(bqPlayerObject,SL_IID_ANDROIDCONFIGURATION, (void*)&playerConfig);
+    __android_log_print(ANDROID_LOG_ERROR, "dingxueqi_nativeaudio", "result =%d",result);
+    assert(SL_RESULT_SUCCESS == result);
+	(void)result;
+
+    SLint32 streamType = SL_ANDROID_STREAM_NATIVE_MUTEX_PROMPT;//SL_ANDROID_STREAM_NATIVE_MUTEX_PROMPT;//SL_ANDROID_STREAM_ALARM;
+    result = (*playerConfig)->SetConfiguration(playerConfig,
+                                             SL_ANDROID_KEY_STREAM_TYPE, &streamType, sizeof(SLint32));
     assert(SL_RESULT_SUCCESS == result);
     (void)result;
 
@@ -747,10 +760,22 @@ Java_com_example_nativeaudio_NativeAudio_createAssetAudioPlayer(JNIEnv* env, jcl
     SLDataSink audioSnk = {&loc_outmix, NULL};
 
     // create audio player
-    const SLInterfaceID ids[3] = {SL_IID_SEEK, SL_IID_MUTESOLO, SL_IID_VOLUME};
-    const SLboolean req[3] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
+    const SLInterfaceID ids[4] = {SL_IID_SEEK, SL_IID_MUTESOLO, SL_IID_VOLUME,SL_IID_ANDROIDCONFIGURATION};
+    const SLboolean req[4] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE,SL_BOOLEAN_TRUE};
     result = (*engineEngine)->CreateAudioPlayer(engineEngine, &fdPlayerObject, &audioSrc, &audioSnk,
-            3, ids, req);
+            4, ids, req);
+    assert(SL_RESULT_SUCCESS == result);
+    (void)result;
+
+    SLAndroidConfigurationItf playerConfig;
+    result = (*fdPlayerObject)->GetInterface(fdPlayerObject,SL_IID_ANDROIDCONFIGURATION, (void*)&playerConfig);
+    __android_log_print(ANDROID_LOG_ERROR, "dingxueqi_nativeaudio", "result =%d",result);
+    assert(SL_RESULT_SUCCESS == result);
+    (void)result;
+
+    SLint32 streamType = SL_ANDROID_STREAM_NATIVE_MUTEX_PROMPT;//SL_ANDROID_STREAM_NATIVE_MUTEX_PROMPT;//SL_ANDROID_STREAM_ALARM;
+    result = (*playerConfig)->SetConfiguration(playerConfig,
+                                               SL_ANDROID_KEY_STREAM_TYPE, &streamType, sizeof(SLint32));
     assert(SL_RESULT_SUCCESS == result);
     (void)result;
 
